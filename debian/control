@@ -1,0 +1,23 @@
+Source: mono-llvm
+Section: devel
+Priority: optional
+Maintainer: Jo Shields <joshield@microsoft.com>
+Build-Depends: debhelper (>= 7.0.50~), autotools-dev, python, cmake
+Standards-Version: 3.9.8
+Homepage: http://www.mono-project.com/docs/advanced/mono-llvm/
+Vcs-Git: git://github.com/mono/linux-packaging-mono-llvm.git
+Vcs-Browser: https://github.com/mono/linux-packaging-mono-llvm
+
+Package: mono-llvm-tools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: opt and llc for Mono llvm mode
+ This package contains command-line tools needed for Mono LLVM
+ mode to operate
+
+Package: mono-llvm-dev
+Architecture: any
+Depends: mono-llvm-tools (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Mono LLVM development files
+ This package contains development files to compile Mono with
+ LLVM back-end enabled

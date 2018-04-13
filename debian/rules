@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+export DH_VERBOSE = 1
+
+override_dh_auto_configure:
+	./configure --prefix=/usr/lib/mono/llvm --enable-targets=host --enable-optimized
+
+override_dh_auto_clean:
+	true
+
+override_dh_auto_test:
+	true
+
+override_dh_install:
+	dh_install
+	rm -f debian/mono-llvm-dev/usr/lib/mono/llvm/bin/opt
+	rm -f debian/mono-llvm-dev/usr/lib/mono/llvm/bin/llc
+
+%:
+	dh $@
