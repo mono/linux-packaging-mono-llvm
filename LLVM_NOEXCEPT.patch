@@ -1,0 +1,26 @@
+diff --git a/tools/llvm-readobj/Error.cpp b/tools/llvm-readobj/Error.cpp
+index a078f5c095c..7e6f780c5d1 100644
+--- a/tools/llvm-readobj/Error.cpp
++++ b/tools/llvm-readobj/Error.cpp
+@@ -24,7 +24,7 @@ public:
+ };
+ } // namespace
+ 
+-const char *_readobj_error_category::name() const {
++const char *_readobj_error_category::name() const LLVM_NOEXCEPT {
+   return "llvm.readobj";
+ }
+ 
+diff --git a/tools/obj2yaml/Error.cpp b/tools/obj2yaml/Error.cpp
+index 00741287a64..1b6a84c5bc6 100644
+--- a/tools/obj2yaml/Error.cpp
++++ b/tools/obj2yaml/Error.cpp
+@@ -20,7 +20,7 @@ public:
+ };
+ } // namespace
+ 
+-const char *_obj2yaml_error_category::name() const { return "obj2yaml"; }
++const char *_obj2yaml_error_category::name() const LLVM_NOEXCEPT { return "obj2yaml"; }
+ 
+ std::string _obj2yaml_error_category::message(int ev) const {
+   switch (static_cast<obj2yaml_error>(ev)) {
