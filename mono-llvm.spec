@@ -71,12 +71,12 @@ make
 %make_install
 
 %files tools
-%defattr(0644,root,root,0755)
+%defattr(-,root,root)
 %{_prefix}/lib/mono/llvm/bin/opt
 %{_prefix}/lib/mono/llvm/bin/llc
 
 %files devel
-%defattr(0644,root,root,0755)
+%defattr(-,root,root)
 %exclude %{_prefix}/lib/mono/llvm/bin/opt
 %exclude %{_prefix}/lib/mono/llvm/bin/llc
 %{_prefix}/lib/mono/llvm/*
