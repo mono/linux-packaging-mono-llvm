@@ -1,8 +1,14 @@
 #!/usr/bin/make -f
 export DH_VERBOSE = 1
 
+DEB_HOST_ARCH_BITS := $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
+
+ifeq ($(DEB_HOST_ARCH_BITS), 32)
+	LINUX32 := linux32
+endif
+
 override_dh_auto_configure:
-	./configure --prefix=/usr/lib/mono/llvm --enable-targets=host --enable-optimized
+	$(LINUX32) ./configure --prefix=/usr/lib/mono/llvm --enable-targets=host --enable-optimized
 
 override_dh_auto_clean:
 	true
