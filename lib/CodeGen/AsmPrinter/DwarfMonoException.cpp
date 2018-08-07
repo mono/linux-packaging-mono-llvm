@@ -426,14 +426,14 @@ void DwarfMonoException::EmitMonoLSDA(const FunctionEHFrameInfo *EFI) {
     const MonoCallSiteEntry &S = *I;
       
     MCSymbol *EHFuncBeginSym =
-      Asm->GetTempSymbol("eh_func_begin", FunctionNumber);
+      Asm->GetTempSymbol("mono_eh_func_begin", FunctionNumber);
       
     MCSymbol *BeginLabel = S.BeginLabel;
     if (BeginLabel == 0)
       BeginLabel = EHFuncBeginSym;
     MCSymbol *EndLabel = S.EndLabel;
     if (EndLabel == 0)
-      EndLabel = Asm->GetTempSymbol("eh_func_end", FunctionNumber);
+      EndLabel = Asm->GetTempSymbol("mono_eh_func_end", FunctionNumber);
         
     Asm->OutStreamer.AddComment("Region start");
     Asm->EmitLabelDifference(BeginLabel, EHFuncBeginSym, 4);
@@ -508,13 +508,9 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
   // Can't use rodata as the symbols we reference are in the text segment
   Streamer.SwitchSection(TLOF.getTextSection());
 
-  bool is_global = true;
-
   std::string symbol_name = MonoEHFrameSymbol;
-  if (symbol_name.length() == 0) {
+  if (symbol_name.length() == 0)
 	  symbol_name = "mono_eh_frame";
-	  is_global = false;
-  }
 
   MCSymbol *EHFrameHdrSym =
 	  Asm->OutContext.GetOrCreateSymbol(Twine(symbol_name));
@@ -527,10 +523,6 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
   if (Asm->MAI->hasDotTypeDotSizeDirective()) {
     Streamer.EmitELFSize(EHFrameHdrSym, Length);
     Streamer.EmitSymbolAttribute(EHFrameHdrSym, MCSA_ELF_TypeObject);
-  }
-  if (is_global) {
-	  Streamer.EmitSymbolAttribute (EHFrameHdrSym, MCSA_Global);
-	  Streamer.EmitSymbolAttribute (EHFrameHdrSym, MCSA_PrivateExtern);
   }
 
   // Header
@@ -553,7 +545,7 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
       //
       Streamer.AddComment("mono method idx");
       Streamer.EmitIntValue (EHFrameInfo.MonoEH.MonoMethodIdx, 4);
-	  MCSymbol *FDEBeginSym = Asm->GetTempSymbol ("mono_eh_func_begin", EHFrameInfo.Number);
+	  MCSymbol *FDEBeginSym = Asm->GetTempSymbol ("mono_eh_fde_begin", EHFrameInfo.Number);
 	  Asm->EmitLabelDifference(FDEBeginSym, EHFrameHdrSym, 4);
   }
   // Emit a last entry to simplify binary searches and to enable the computation of
@@ -565,8 +557,8 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
 	  const FunctionEHFrameInfo &EHFrameInfo = EHFrames [EHFrames.size() - 1];
       int Index = EHFrameInfo.Number;
 	  // Emit the size of the last function, since it cannot be computed using the next table entry
-	  MCSymbol *Sym1 = Asm->GetTempSymbol("eh_func_begin", Index);
-	  MCSymbol *Sym2 = Asm->GetTempSymbol("eh_func_end", Index);
+	  MCSymbol *Sym1 = Asm->GetTempSymbol("mono_eh_func_begin", Index);
+	  MCSymbol *Sym2 = Asm->GetTempSymbol("mono_eh_func_end", Index);
 	  Asm->EmitLabelDifference(Sym2, Sym1, 4);
 	  MCSymbol *Sym3 = Asm->GetTempSymbol ("mono_eh_frame_end");
 	  Asm->EmitLabelDifference(Sym3, EHFrameHdrSym, 4);
@@ -600,13 +592,13 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
 	  const FunctionEHFrameInfo &EHFrameInfo = *I;
       int Index = EHFrameInfo.Number;
 
-	  MCSymbol *FDEBeginSym = Asm->GetTempSymbol ("mono_eh_func_begin", Index);
+	  MCSymbol *FDEBeginSym = Asm->GetTempSymbol ("mono_eh_fde_begin", Index);
       Streamer.EmitLabel(FDEBeginSym);
 
       // No need for length, CIE, PC begin, PC range, alignment
 
       // Emit augmentation
-      if (EHFrameInfo.hasLandingPads) {
+      if (EHFrameInfo.hasLandingPads || EHFrameInfo.MonoEH.FrameReg != -1) {
         // Need an extra has_augmentation field as the augmentation size is always encoded
         // in 4 bytes
         Asm->EmitULEB128(1, "Has augmentation");
@@ -625,13 +617,15 @@ void DwarfMonoException::EmitMonoEHFrame(const Function *Personality)
 
       CFAOffset = CIECFAOffset;
 
-      MCSymbol *BeginSym = Asm->GetTempSymbol("eh_func_begin", Index);
+      MCSymbol *BeginSym = Asm->GetTempSymbol("mono_eh_func_begin", Index);
       EmitCFIInstructions(Streamer, EHFrameInfo.Instructions, BeginSym, &EHFrameInfo.EHLabels, CFAOffset, dataAlignmentFactor);
 
       Streamer.AddBlankLine();
   }
 
   Streamer.EmitLabel(EHFrameEndSym);
+
+  Asm->EmitAlignment(3);
 }
 
 DwarfMonoException::DwarfMonoException(AsmPrinter *A)
@@ -641,14 +635,14 @@ DwarfMonoException::~DwarfMonoException() {}
 
 void DwarfMonoException::beginFunction(const MachineFunction *MF)
 {
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("mono_eh_func_begin",
                                                 Asm->getFunctionNumber()));
   EHLabels.clear();
 }
 
 void DwarfMonoException::endFunction(const MachineFunction *MF)
 {
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("mono_eh_func_end",
                                                 Asm->getFunctionNumber()));
 
   MMI->TidyLandingPads();
