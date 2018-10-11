@@ -61,13 +61,16 @@ This package contains development files for the IDE and plugins.
 %build
 %{?scl:scl enable %{scl} - << \EOF}
 which g++
-%define __builddir buildybuild
-%cmake -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ .
-%cmake build .
+mkdir buildybuild/
+cd buildybuild/
+cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
+cmake3 build .
 %{?scl:EOF}
 
 %install
-%cmake_install
+%{?scl:scl enable %{scl} - << \EOF}
+cd buildybuild/ && cmake3 -DCMAKE_INSTALL_PREFIX=%{?buildroot} -P cmake_install.cmake
+%{?scl:EOF}
 
 %files tools
 %defattr(-,root,root)
