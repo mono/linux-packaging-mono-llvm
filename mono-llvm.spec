@@ -23,7 +23,7 @@ BuildRequires:  python
 BuildRequires:  devtoolset-2-toolchain
 %endif
 Url:            http://www.mono-project.com/docs/advanced/mono-llvm/
-Version:	3.6.0+mono201805011452
+Version:	6.0+mono20180728010642
 Release:	0.xamarin.1
 Summary:        LLVM fork for Mono
 License:        MIT and others
