@@ -63,12 +63,12 @@ This package contains development files for the IDE and plugins.
 %build
 %{?scl:scl enable %{scl} - << \EOF}
 which g++
-%configure --prefix=%{_prefix}/lib/mono/llvm/ --enable-targets=host --enable-optimized
-make
+%cmake -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
+%cmake build .
 %{?scl:EOF}
 
 %install
-%make_install
+%cmake_install
 
 %files tools
 %defattr(-,root,root)
