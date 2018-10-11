@@ -29,7 +29,6 @@ Summary:        LLVM fork for Mono
 License:        MIT and others
 Group:          Development/Tools/IDE
 Source:         %{name}-%{version}.tar.gz
-Patch0:		LLVM_NOEXCEPT.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
@@ -58,7 +57,6 @@ This package contains development files for the IDE and plugins.
 
 %prep
 %setup -q -n mono-llvm-6.0
-%patch0 -p1
 
 %build
 %{?scl:scl enable %{scl} - << \EOF}
