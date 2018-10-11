@@ -64,7 +64,7 @@ which g++
 mkdir buildybuild/
 cd buildybuild/
 cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
-cmake3 build .
+make all
 %{?scl:EOF}
 
 %install
