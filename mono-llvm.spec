@@ -57,7 +57,7 @@ a port of SharpDevelop 0.98.
 This package contains development files for the IDE and plugins.
 
 %prep
-%setup -q -n mono-llvm-3.6.0
+%setup -q -n mono-llvm-6.0
 %patch0 -p1
 
 %build
