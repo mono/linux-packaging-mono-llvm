@@ -69,7 +69,7 @@ make all
 
 %install
 %{?scl:scl enable %{scl} - << \EOF}
-cd buildybuild/ && cmake3 -DCMAKE_INSTALL_PREFIX=%{?buildroot}/lib/mono/llvm/ -P cmake_install.cmake
+cd buildybuild/ && cmake3 -DCMAKE_INSTALL_PREFIX=%{?buildroot}/%{_prefix}/lib/mono/llvm/ -P cmake_install.cmake
 %{?scl:EOF}
 
 %files tools
