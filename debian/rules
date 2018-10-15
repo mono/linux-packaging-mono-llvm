@@ -25,7 +25,7 @@ override_dh_auto_test:
 	true
 
 override_dh_auto_install:
-	cd buildybuild && cmake -DCMAKE_INSTALL_PREFIX=$(DEBIAN_DIR)/tmp/lib/mono/llvm/ -P cmake_install.cmake
+	cd buildybuild && cmake -DCMAKE_INSTALL_PREFIX=$(DEBIAN_DIR)/tmp/usr/lib/mono/llvm/ -P cmake_install.cmake
 
 override_dh_install:
 	dh_install
