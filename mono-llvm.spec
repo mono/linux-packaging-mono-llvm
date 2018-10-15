@@ -49,11 +49,7 @@ Group:          Development/Languages/Mono
 Requires:       mono-llvm-tools = %{version}
 
 %description devel
-MonoDevelop is a full-featured integrated development
-environment (IDE) for Mono and Gtk-Sharp. It was originally
-a port of SharpDevelop 0.98.
-
-This package contains development files for the IDE and plugins.
+Mono LLVM fork, tools needed for build time
 
 %prep
 %setup -q -n mono-llvm-6.0
