@@ -15,10 +15,12 @@
 //===----------------------------------------------------------------------===//
 // SGX instructions
 
+let SchedRW = [WriteSystem] in {
 // ENCLS - Execute an Enclave System Function of Specified Leaf Number
 def ENCLS : I<0x01, MRM_CF, (outs), (ins),
-             "encls", []>, TB, Requires<[HasSGX]>;
+             "encls", []>, TB;
 
 // ENCLU - Execute an Enclave User Function of Specified Leaf Number
 def ENCLU : I<0x01, MRM_D7, (outs), (ins),
-             "enclu", []>, TB, Requires<[HasSGX]>;
+             "enclu", []>, TB;
+} // SchedRW

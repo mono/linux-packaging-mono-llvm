@@ -11,7 +11,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -34,7 +33,7 @@ public:
     ObjMap[ModuleID] = copyBuffer(Obj);
   }
 
-  virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) {
+  std::unique_ptr<MemoryBuffer> getObject(const Module *M) override {
     const MemoryBuffer* BufferFound = getObjectInternal(M);
     ModulesLookedUp.insert(M->getModuleIdentifier());
     if (!BufferFound)
@@ -79,13 +78,12 @@ private:
 
 class MCJITObjectCacheTest : public testing::Test, public MCJITTestBase {
 protected:
-
   enum {
     OriginalRC = 6,
     ReplacementRC = 7
   };
 
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(createEmptyModule("<main>"));
     Main = insertMainFunction(M.get(), OriginalRC);
   }
@@ -102,7 +100,7 @@ protected:
     EXPECT_TRUE(nullptr != vPtr)
       << "Unable to get pointer to main() from JIT";
 
-    int (*FuncPtr)(void) = (int(*)(void))(intptr_t)vPtr;
+    int (*FuncPtr)() = (int(*)())(intptr_t)vPtr;
     int returnCode = FuncPtr();
     EXPECT_EQ(returnCode, ExpectedRC);
   }
@@ -119,7 +117,6 @@ TEST_F(MCJITObjectCacheTest, SetNullObjectCache) {
 
   compileAndRun();
 }
-
 
 TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
   SKIP_UNSUPPORTED_PLATFORM;
@@ -164,7 +161,7 @@ TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
   TheJIT.reset();
 
   // Create a new memory manager.
-  MM = new SectionMemoryManager;
+  MM.reset(new SectionMemoryManager());
 
   // Create a new module and save it. Use a different return code so we can
   // tell if MCJIT compiled this module or used the cache.
@@ -198,7 +195,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   TheJIT.reset();
 
   // Create a new memory manager.
-  MM = new SectionMemoryManager;
+  MM.reset(new SectionMemoryManager());
 
   // Create a new module and save it. Use a different return code so we can
   // tell if MCJIT compiled this module or used the cache. Note that we use
@@ -229,5 +226,4 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   EXPECT_FALSE(Cache->wereDuplicatesInserted());
 }
 
-} // Namespace
-
+} // end anonymous namespace

@@ -8,24 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/LEB128.h"
+#include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryObject.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include <system_error>
+#include "llvm/Support/LEB128.h"
+#include "llvm/Support/raw_ostream.h"
 #include <functional>
+#include <system_error>
 
 using namespace llvm;
 using namespace object;
 
-int convert_for_testing_main(int argc, const char **argv) {
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
-
+int convertForTestingMain(int argc, const char *argv[]) {
   cl::opt<std::string> InputSourceFile(cl::Positional, cl::Required,
                                        cl::desc("<Source file>"));
 
@@ -37,11 +30,15 @@ int convert_for_testing_main(int argc, const char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
 
   auto ObjErr = llvm::object::ObjectFile::createObjectFile(InputSourceFile);
-  if (auto Err = ObjErr.getError()) {
-    errs() << "error: " << Err.message() << "\n";
+  if (!ObjErr) {
+    std::string Buf;
+    raw_string_ostream OS(Buf);
+    logAllUnhandledErrors(ObjErr.takeError(), OS, "");
+    OS.flush();
+    errs() << "error: " << Buf;
     return 1;
   }
-  ObjectFile *OF = ObjErr.get().getBinary().get();
+  ObjectFile *OF = ObjErr.get().getBinary();
   auto BytesInAddress = OF->getBytesInAddress();
   if (BytesInAddress != 8) {
     errs() << "error: 64 bit binary expected\n";
@@ -51,13 +48,16 @@ int convert_for_testing_main(int argc, const char **argv) {
   // Look for the sections that we are interested in.
   int FoundSectionCount = 0;
   SectionRef ProfileNames, CoverageMapping;
+  auto ObjFormat = OF->getTripleObjectFormat();
   for (const auto &Section : OF->sections()) {
     StringRef Name;
     if (Section.getName(Name))
       return 1;
-    if (Name == "__llvm_prf_names") {
+    if (Name == llvm::getInstrProfSectionName(IPSK_name, ObjFormat,
+                                              /*AddSegmentInfo=*/false)) {
       ProfileNames = Section;
-    } else if (Name == "__llvm_covmap") {
+    } else if (Name == llvm::getInstrProfSectionName(
+                           IPSK_covmap, ObjFormat, /*AddSegmentInfo=*/false)) {
       CoverageMapping = Section;
     } else
       continue;
@@ -67,11 +67,10 @@ int convert_for_testing_main(int argc, const char **argv) {
     return 1;
 
   // Get the contents of the given sections.
+  uint64_t ProfileNamesAddress = ProfileNames.getAddress();
   StringRef CoverageMappingData;
-  uint64_t ProfileNamesAddress;
   StringRef ProfileNamesData;
   if (CoverageMapping.getContents(CoverageMappingData) ||
-      ProfileNames.getAddress(ProfileNamesAddress) ||
       ProfileNames.getContents(ProfileNamesData))
     return 1;
 
@@ -86,7 +85,11 @@ int convert_for_testing_main(int argc, const char **argv) {
   OS << "llvmcovmtestdata";
   encodeULEB128(ProfileNamesData.size(), OS);
   encodeULEB128(ProfileNamesAddress, OS);
-  OS << ProfileNamesData << CoverageMappingData;
+  OS << ProfileNamesData;
+  // Coverage mapping data is expected to have an alignment of 8.
+  for (unsigned Pad = OffsetToAlignment(OS.tell(), 8); Pad; --Pad)
+    OS.write(uint8_t(0));
+  OS << CoverageMappingData;
 
   return 0;
 }
