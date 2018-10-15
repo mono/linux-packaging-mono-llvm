@@ -18,7 +18,7 @@ Name:           mono-llvm
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  cmake3
-BuildRequires:  python
+BuildRequires:  python34
 %if 0%{?rhel} < 7
 BuildRequires:  devtoolset-2-toolchain
 %endif
@@ -69,7 +69,7 @@ make all
 
 %install
 %{?scl:scl enable %{scl} - << \EOF}
-cd buildybuild/ && cmake3 -DCMAKE_INSTALL_PREFIX=%{?buildroot}/%{_prefix}/lib/mono/llvm/ -P cmake_install.cmake
+cd buildybuild/ && cmake3 -DPYTHON_EXECUTABLE="/usr/bin/python3" -DCMAKE_INSTALL_PREFIX=%{?buildroot}/%{_prefix}/lib/mono/llvm/ -P cmake_install.cmake
 %{?scl:EOF}
 
 %files tools
