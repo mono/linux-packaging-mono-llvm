@@ -63,13 +63,13 @@ This package contains development files for the IDE and plugins.
 which g++
 mkdir buildybuild/
 cd buildybuild/
-cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
+cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DPYTHON_EXECUTABLE:FILEPATH="/usr/bin/python3" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
 make all
 %{?scl:EOF}
 
 %install
 %{?scl:scl enable %{scl} - << \EOF}
-cd buildybuild/ && cmake3 -DPYTHON_EXECUTABLE="/usr/bin/python3" -DCMAKE_INSTALL_PREFIX=%{?buildroot}/%{_prefix}/lib/mono/llvm/ -P cmake_install.cmake
+cd buildybuild/ && cmake3 -DCMAKE_INSTALL_PREFIX=%{?buildroot}/%{_prefix}/lib/mono/llvm/ -P cmake_install.cmake
 %{?scl:EOF}
 
 %files tools
