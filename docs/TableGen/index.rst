@@ -90,7 +90,7 @@ of the classes, then all of the definitions.  This is a good way to see what the
 various definitions expand to fully.  Running this on the ``X86.td`` file prints
 this (at the time of this writing):
 
-.. code-block:: llvm
+.. code-block:: text
 
   ...
   def ADD32rr {   // Instruction X86Inst I
@@ -123,7 +123,6 @@ this (at the time of this writing):
     bit hasCtrlDep = 0;
     bit isNotDuplicable = 0;
     bit hasSideEffects = 0;
-    bit neverHasSideEffects = 0;
     InstrItinClass Itinerary = NoItinerary;
     string Constraints = "";
     string DisableEncoding = "";
@@ -156,7 +155,7 @@ by the code generator, and specifying it all manually would be unmaintainable,
 prone to bugs, and tiring to do in the first place.  Because we are using
 TableGen, all of the information was derived from the following definition:
 
-.. code-block:: llvm
+.. code-block:: text
 
   let Defs = [EFLAGS],
       isCommutable = 1,                  // X = ADD Y,Z --> X = ADD Z,Y
@@ -202,7 +201,7 @@ TableGen.
 **TableGen definitions** are the concrete form of 'records'.  These generally do
 not have any undefined values, and are marked with the '``def``' keyword.
 
-.. code-block:: llvm
+.. code-block:: text
 
   def FeatureFPARMv8 : SubtargetFeature<"fp-armv8", "HasFPARMv8", "true",
                                         "Enable ARMv8 FP">;
@@ -221,7 +220,7 @@ floating point instructions in the X86 backend).  TableGen keeps track of all of
 the classes that are used to build up a definition, so the backend can find all
 definitions of a particular class, such as "Instruction".
 
-.. code-block:: llvm
+.. code-block:: text
 
  class ProcNoItin<string Name, list<SubtargetFeature> Features>
        : Processor<Name, NoItineraries, Features>;
@@ -236,7 +235,7 @@ If a multiclass inherits from another multiclass, the definitions in the
 sub-multiclass become part of the current multiclass, as if they were declared
 in the current multiclass.
 
-.. code-block:: llvm
+.. code-block:: text
 
   multiclass ro_signed_pats<string T, string Rm, dag Base, dag Offset, dag Extend,
                           dag address, ValueType sty> {
@@ -273,7 +272,7 @@ that's only useful for debugging of the TableGen files themselves. The power
 in TableGen is, however, to interpret the source files into an internal 
 representation that can be generated into anything you want.
 
-Current usage of TableGen is to create include huge files with tables that you
+Current usage of TableGen is to create huge include files with tables that you
 can either include directly (if the output is in the language you're coding),
 or be used in pre-processing via macros surrounding the include of the file.
 

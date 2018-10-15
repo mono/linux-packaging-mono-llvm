@@ -22,7 +22,6 @@
 #include <cctype>
 #include <functional>
 #include <map>
-#include <vector>
 
 namespace llvm {
 
@@ -38,7 +37,7 @@ class SequenceToOffsetTable {
 
   // Define a comparator for SeqT that sorts a suffix immediately before a
   // sequence with that suffix.
-  struct SeqLess : public std::binary_function<SeqT, SeqT, bool> {
+  struct SeqLess {
     Less L;
     bool operator()(const SeqT &A, const SeqT &B) const {
       return std::lexicographical_compare(A.rbegin(), A.rend(),
@@ -83,6 +82,11 @@ public:
   }
 
   bool empty() const { return Seqs.empty(); }
+
+  unsigned size() const {
+    assert(Entries && "Call layout() before size()");
+    return Entries;
+  }
 
   /// layout - Computes the final table layout.
   void layout() {

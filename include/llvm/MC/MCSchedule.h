@@ -24,7 +24,7 @@ struct InstrItinerary;
 
 /// Define a kind of processor resource that will be modeled by the scheduler.
 struct MCProcResourceDesc {
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   const char *Name;
 #endif
   unsigned NumUnits; // Number of resource of this kind
@@ -102,7 +102,7 @@ struct MCSchedClassDesc {
   static const unsigned short InvalidNumMicroOps = UINT16_MAX;
   static const unsigned short VariantNumMicroOps = UINT16_MAX - 1;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   const char* Name;
 #endif
   unsigned short NumMicroOps;
@@ -165,9 +165,6 @@ struct MCSchedModel {
   static const unsigned DefaultLoopMicroOpBufferSize = 0;
 
   // LoadLatency is the expected latency of load instructions.
-  //
-  // If MinLatency >= 0, this may be overriden for individual load opcodes by
-  // InstrItinerary OperandCycles.
   unsigned LoadLatency;
   static const unsigned DefaultLoadLatency = 4;
 
@@ -175,7 +172,6 @@ struct MCSchedModel {
   // See TargetInstrInfo::isHighLatencyDef().
   // By default, this is set to an arbitrarily high number of cycles
   // likely to have some impact on scheduling heuristics.
-  // If MinLatency >= 0, this may be overriden by InstrItinData OperandCycles.
   unsigned HighLatency;
   static const unsigned DefaultHighLatency = 10;
 
@@ -183,7 +179,7 @@ struct MCSchedModel {
   // takes to recover from a branch misprediction.
   unsigned MispredictPenalty;
   static const unsigned DefaultMispredictPenalty = 10;
-  
+
   bool PostRAScheduler; // default value is false
 
   bool CompleteModel;
@@ -206,6 +202,9 @@ struct MCSchedModel {
   /// scheduling class (itinerary class or SchedRW list).
   bool isComplete() const { return CompleteModel; }
 
+  /// Return true if machine supports out of order execution.
+  bool isOutOfOrder() const { return MicroOpBufferSize > 1; }
+
   unsigned getNumProcResourceKinds() const {
     return NumProcResourceKinds;
   }
@@ -224,25 +223,9 @@ struct MCSchedModel {
     return &SchedClassTable[SchedClassIdx];
   }
 
-  // /\brief Returns a default initialiszed mdoel.  Used for unknown processors.
-  static MCSchedModel GetDefaultSchedModel() {
-    MCSchedModel Ret = { DefaultIssueWidth,
-                         DefaultMicroOpBufferSize,
-                         DefaultLoopMicroOpBufferSize,
-                         DefaultLoadLatency,
-                         DefaultHighLatency,
-                         DefaultMispredictPenalty,
-                         false,
-                         true,
-                         0,
-                         nullptr,
-                         nullptr,
-                         0,
-                         0,
-                         nullptr
-                       };
-    return Ret;
-  }
+  /// Returns the default initialized model.
+  static const MCSchedModel &GetDefaultSchedModel() { return Default; }
+  static const MCSchedModel Default;
 };
 
 } // End llvm namespace

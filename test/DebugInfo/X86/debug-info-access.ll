@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-info %t | FileCheck %s
 ;
 ; Test the DW_AT_accessibility DWARF attribute.
 ;
@@ -46,22 +46,22 @@
 ;
 ; CHECK: DW_TAG_inheritance
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_member
 ; CHECK:     DW_AT_name {{.*}}"public_static")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"pub")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"prot")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x02)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_protected)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"priv_default")
@@ -71,7 +71,7 @@
 ; CHECK: DW_TAG_member
 ; CHECK:     DW_AT_name {{.*}}"union_priv")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x03)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_private)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"union_pub_default")
@@ -84,6 +84,7 @@
 ; CHECK-NOT: DW_TAG
 ;
 ; ModuleID = '/llvm/tools/clang/test/CodeGenCXX/debug-info-access.cpp'
+source_filename = "test/DebugInfo/X86/debug-info-access.ll"
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
@@ -91,60 +92,62 @@ target triple = "x86_64-apple-macosx10.10.0"
 %class.B = type { i8 }
 %union.U = type { i32 }
 
-@a = global %struct.A zeroinitializer, align 1
-@b = global %class.B zeroinitializer, align 1
-@u = global %union.U zeroinitializer, align 4
+@a = global %struct.A zeroinitializer, align 1, !dbg !0
+@b = global %class.B zeroinitializer, align 1, !dbg !11
+@u = global %union.U zeroinitializer, align 4, !dbg !23
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z4freev() #0 {
-  ret void, !dbg !41
+define void @_Z4freev() #0 !dbg !39 {
+  ret void, !dbg !42
 }
 
 attributes #0 = { nounwind ssp uwtable }
 
-!llvm.dbg.cu = !{!0}
-!llvm.module.flags = !{!38, !39}
-!llvm.ident = !{!40}
+!llvm.dbg.cu = !{!32}
+!llvm.module.flags = !{!36, !37}
+!llvm.ident = !{!38}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.6.0 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !29, metadata !34, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/llvm/tools/clang/test/CodeGenCXX/debug-info-access.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !"/llvm/tools/clang/test/CodeGenCXX/debug-info-access.cpp", metadata !""}
-!2 = metadata !{}
-!3 = metadata !{metadata !4, metadata !12, metadata !22}
-!4 = metadata !{i32 786451, metadata !1, null, metadata !"A", i32 3, i64 8, i64 8, i32 0, i32 0, null, metadata !5, i32 0, null, null, metadata !"_ZTS1A"} ; [ DW_TAG_structure_type ] [A] [line 3, size 8, align 8, offset 0] [def] [from ]
-!5 = metadata !{metadata !6, metadata !8}
-!6 = metadata !{i32 786445, metadata !1, metadata !"_ZTS1A", metadata !"pub_default_static", i32 7, i64 0, i64 0, i64 0, i32 4096, metadata !7, null} ; [ DW_TAG_member ] [pub_default_static] [line 7, size 0, align 0, offset 0] [static] [from int]
-!7 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!8 = metadata !{i32 786478, metadata !1, metadata !"_ZTS1A", metadata !"pub_default", metadata !"pub_default", metadata !"_ZN1A11pub_defaultEv", i32 5, metadata !9, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, null, i32 5} ; [ DW_TAG_subprogram ] [line 5] [pub_default]
-!9 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !10, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!10 = metadata !{null, metadata !11}
-!11 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
-!12 = metadata !{i32 786434, metadata !1, null, metadata !"B", i32 11, i64 8, i64 8, i32 0, i32 0, null, metadata !13, i32 0, null, null, metadata !"_ZTS1B"} ; [ DW_TAG_class_type ] [B] [line 11, size 8, align 8, offset 0] [def] [from ]
-!13 = metadata !{metadata !14, metadata !15, metadata !16, metadata !20, metadata !21}
-!14 = metadata !{i32 786460, null, metadata !"_ZTS1B", null, i32 0, i64 0, i64 0, i64 0, i32 3, metadata !"_ZTS1A"} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [public] [from _ZTS1A]
-!15 = metadata !{i32 786445, metadata !1, metadata !"_ZTS1B", metadata !"public_static", i32 16, i64 0, i64 0, i64 0, i32 4099, metadata !7, null} ; [ DW_TAG_member ] [public_static] [line 16, size 0, align 0, offset 0] [public] [static] [from int]
-!16 = metadata !{i32 786478, metadata !1, metadata !"_ZTS1B", metadata !"pub", metadata !"pub", metadata !"_ZN1B3pubEv", i32 14, metadata !17, i1 false, i1 false, i32 0, i32 0, null, i32 259, i1 false, null, null, i32 0, null, i32 14} ; [ DW_TAG_subprogram ] [line 14] [public] [pub]
-!17 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !18, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!18 = metadata !{null, metadata !19}
-!19 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1B]
-!20 = metadata !{i32 786478, metadata !1, metadata !"_ZTS1B", metadata !"prot", metadata !"prot", metadata !"_ZN1B4protEv", i32 19, metadata !17, i1 false, i1 false, i32 0, i32 0, null, i32 258, i1 false, null, null, i32 0, null, i32 19} ; [ DW_TAG_subprogram ] [line 19] [protected] [prot]
-!21 = metadata !{i32 786478, metadata !1, metadata !"_ZTS1B", metadata !"priv_default", metadata !"priv_default", metadata !"_ZN1B12priv_defaultEv", i32 22, metadata !17, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, null, i32 22} ; [ DW_TAG_subprogram ] [line 22] [priv_default]
-!22 = metadata !{i32 786455, metadata !1, null, metadata !"U", i32 25, i64 32, i64 32, i64 0, i32 0, null, metadata !23, i32 0, null, null, metadata !"_ZTS1U"} ; [ DW_TAG_union_type ] [U] [line 25, size 32, align 32, offset 0] [def] [from ]
-!23 = metadata !{metadata !24, metadata !25}
-!24 = metadata !{i32 786445, metadata !1, metadata !"_ZTS1U", metadata !"union_priv", i32 30, i64 32, i64 32, i64 0, i32 1, metadata !7} ; [ DW_TAG_member ] [union_priv] [line 30, size 32, align 32, offset 0] [private] [from int]
-!25 = metadata !{i32 786478, metadata !1, metadata !"_ZTS1U", metadata !"union_pub_default", metadata !"union_pub_default", metadata !"_ZN1U17union_pub_defaultEv", i32 27, metadata !26, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, i32 0, null, i32 27} ; [ DW_TAG_subprogram ] [line 27] [union_pub_default]
-!26 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !27, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!27 = metadata !{null, metadata !28}
-!28 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1U"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1U]
-!29 = metadata !{metadata !30}
-!30 = metadata !{i32 786478, metadata !1, metadata !31, metadata !"free", metadata !"free", metadata !"_Z4freev", i32 35, metadata !32, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z4freev, null, null, metadata !2, i32 35} ; [ DW_TAG_subprogram ] [line 35] [def] [free]
-!31 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [/llvm/tools/clang/test/CodeGenCXX/debug-info-access.cpp]
-!32 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !33, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!33 = metadata !{null}
-!34 = metadata !{metadata !35, metadata !36, metadata !37}
-!35 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !31, i32 37, metadata !"_ZTS1A", i32 0, i32 1, %struct.A* @a, null} ; [ DW_TAG_variable ] [a] [line 37] [def]
-!36 = metadata !{i32 786484, i32 0, null, metadata !"b", metadata !"b", metadata !"", metadata !31, i32 38, metadata !"_ZTS1B", i32 0, i32 1, %class.B* @b, null} ; [ DW_TAG_variable ] [b] [line 38] [def]
-!37 = metadata !{i32 786484, i32 0, null, metadata !"u", metadata !"u", metadata !"", metadata !31, i32 39, metadata !"_ZTS1U", i32 0, i32 1, %union.U* @u, null} ; [ DW_TAG_variable ] [u] [line 39] [def]
-!38 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!39 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
-!40 = metadata !{metadata !"clang version 3.6.0 "}
-!41 = metadata !{i32 35, i32 14, metadata !30, null}
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
+!1 = !DIGlobalVariable(name: "a", scope: null, file: !2, line: 37, type: !3, isLocal: false, isDefinition: true)
+!2 = !DIFile(filename: "/llvm/tools/clang/test/CodeGenCXX/debug-info-access.cpp", directory: "")
+!3 = !DICompositeType(tag: DW_TAG_structure_type, name: "A", file: !2, line: 3, size: 8, align: 8, elements: !4, identifier: "_ZTS1A")
+!4 = !{!5, !7}
+!5 = !DIDerivedType(tag: DW_TAG_member, name: "pub_default_static", scope: !3, file: !2, line: 7, baseType: !6, flags: DIFlagStaticMember)
+!6 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!7 = !DISubprogram(name: "pub_default", linkageName: "_ZN1A11pub_defaultEv", scope: !3, file: !2, line: 5, type: !8, isLocal: false, isDefinition: false, scopeLine: 5, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false)
+!8 = !DISubroutineType(types: !9)
+!9 = !{null, !10}
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !3, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer)
+!11 = !DIGlobalVariableExpression(var: !12, expr: !DIExpression())
+!12 = !DIGlobalVariable(name: "b", scope: null, file: !2, line: 38, type: !13, isLocal: false, isDefinition: true)
+!13 = !DICompositeType(tag: DW_TAG_class_type, name: "B", file: !2, line: 11, size: 8, align: 8, elements: !14, identifier: "_ZTS1B")
+!14 = !{!15, !16, !17, !21, !22}
+!15 = !DIDerivedType(tag: DW_TAG_inheritance, scope: !13, baseType: !3, flags: DIFlagPublic)
+!16 = !DIDerivedType(tag: DW_TAG_member, name: "public_static", scope: !13, file: !2, line: 16, baseType: !6, flags: DIFlagPublic | DIFlagStaticMember)
+!17 = !DISubprogram(name: "pub", linkageName: "_ZN1B3pubEv", scope: !13, file: !2, line: 14, type: !18, isLocal: false, isDefinition: false, scopeLine: 14, virtualIndex: 6, flags: DIFlagPublic | DIFlagPrototyped, isOptimized: false)
+!18 = !DISubroutineType(types: !19)
+!19 = !{null, !20}
+!20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !13, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer)
+!21 = !DISubprogram(name: "prot", linkageName: "_ZN1B4protEv", scope: !13, file: !2, line: 19, type: !18, isLocal: false, isDefinition: false, scopeLine: 19, virtualIndex: 6, flags: DIFlagProtected | DIFlagPrototyped, isOptimized: false)
+!22 = !DISubprogram(name: "priv_default", linkageName: "_ZN1B12priv_defaultEv", scope: !13, file: !2, line: 22, type: !18, isLocal: false, isDefinition: false, scopeLine: 22, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false)
+!23 = !DIGlobalVariableExpression(var: !24, expr: !DIExpression())
+!24 = !DIGlobalVariable(name: "u", scope: null, file: !2, line: 39, type: !25, isLocal: false, isDefinition: true)
+!25 = !DICompositeType(tag: DW_TAG_union_type, name: "U", file: !2, line: 25, size: 32, align: 32, elements: !26, identifier: "_ZTS1U")
+!26 = !{!27, !28}
+!27 = !DIDerivedType(tag: DW_TAG_member, name: "union_priv", scope: !25, file: !2, line: 30, baseType: !6, size: 32, align: 32, flags: DIFlagPrivate)
+!28 = !DISubprogram(name: "union_pub_default", linkageName: "_ZN1U17union_pub_defaultEv", scope: !25, file: !2, line: 27, type: !29, isLocal: false, isDefinition: false, scopeLine: 27, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false)
+!29 = !DISubroutineType(types: !30)
+!30 = !{null, !31}
+!31 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !25, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer)
+!32 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !2, producer: "clang version 3.6.0 ", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !33, retainedTypes: !34, globals: !35, imports: !33)
+!33 = !{}
+!34 = !{!3, !13, !25}
+!35 = !{!0, !11, !23}
+!36 = !{i32 2, !"Dwarf Version", i32 2}
+!37 = !{i32 2, !"Debug Info Version", i32 3}
+!38 = !{!"clang version 3.6.0 "}
+!39 = distinct !DISubprogram(name: "free", linkageName: "_Z4freev", scope: !2, file: !2, line: 35, type: !40, isLocal: false, isDefinition: true, scopeLine: 35, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !32, variables: !33)
+!40 = !DISubroutineType(types: !41)
+!41 = !{null}
+!42 = !DILocation(line: 35, column: 14, scope: !39)
+

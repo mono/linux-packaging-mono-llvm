@@ -6,206 +6,260 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This class implements rendering for code coverage of source code.
-//
+///
+/// \file This class implements rendering for code coverage of source code.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_COV_SOURCECOVERAGEVIEW_H
 #define LLVM_COV_SOURCECOVERAGEVIEW_H
 
 #include "CoverageViewOptions.h"
-#include "SourceCoverageDataManager.h"
-#include "llvm/ProfileData/CoverageMapping.h"
+#include "CoverageSummaryInfo.h"
+#include "llvm/ProfileData/Coverage/CoverageMapping.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <vector>
 
 namespace llvm {
 
-/// \brief A code coverage view of a specific source file.
-/// It can have embedded coverage views.
-class SourceCoverageView {
-public:
-  enum SubViewKind { View, ExpansionView, InstantiationView };
+using namespace coverage;
 
-  /// \brief Coverage information for a single line.
-  struct LineCoverageInfo {
-    uint64_t ExecutionCount;
-    unsigned RegionCount;
-    bool Mapped;
+class CoverageFiltersMatchAll;
+class SourceCoverageView;
 
-    LineCoverageInfo() : ExecutionCount(0), RegionCount(0), Mapped(false) {}
+/// \brief A view that represents a macro or include expansion.
+struct ExpansionView {
+  CounterMappingRegion Region;
+  std::unique_ptr<SourceCoverageView> View;
 
-    bool isMapped() const { return Mapped; }
-
-    bool hasMultipleRegions() const { return RegionCount > 1; }
-
-    void addRegionStartCount(uint64_t Count) {
-      Mapped = true;
-      ExecutionCount = Count;
-      ++RegionCount;
-    }
-
-    void addRegionCount(uint64_t Count) {
-      Mapped = true;
-      ExecutionCount = Count;
-    }
-  };
-
-  /// \brief A marker that points at the start
-  /// of a specific mapping region.
-  struct RegionMarker {
-    unsigned Line, Column;
-    uint64_t ExecutionCount;
-
-    RegionMarker(unsigned Line, unsigned Column, uint64_t Value)
-        : Line(Line), Column(Column), ExecutionCount(Value) {}
-  };
-
-  /// \brief A single line source range used to
-  /// render highlighted text.
-  struct HighlightRange {
-    enum HighlightKind {
-      /// The code that wasn't executed.
-      NotCovered,
-
-      /// The region of code that was expanded.
-      Expanded
-    };
-    HighlightKind Kind;
-    unsigned Line;
-    unsigned ColumnStart;
-    unsigned ColumnEnd;
-
-    HighlightRange(unsigned Line, unsigned ColumnStart, unsigned ColumnEnd,
-                   HighlightKind Kind = NotCovered)
-        : Kind(Kind), Line(Line), ColumnStart(ColumnStart),
-          ColumnEnd(ColumnEnd) {}
-
-    bool operator<(const HighlightRange &Other) const {
-      if (Line == Other.Line)
-        return ColumnStart < Other.ColumnStart;
-      return Line < Other.Line;
-    }
-
-    bool columnStartOverlaps(const HighlightRange &Other) const {
-      return ColumnStart <= Other.ColumnStart && ColumnEnd > Other.ColumnStart;
-    }
-    bool columnEndOverlaps(const HighlightRange &Other) const {
-      return ColumnEnd >= Other.ColumnEnd && ColumnStart < Other.ColumnEnd;
-    }
-    bool contains(const HighlightRange &Other) const {
-      if (Line != Other.Line)
-        return false;
-      return ColumnStart <= Other.ColumnStart && ColumnEnd >= Other.ColumnEnd;
-    }
-
-    bool overlaps(const HighlightRange &Other) const {
-      if (Line != Other.Line)
-        return false;
-      return columnStartOverlaps(Other) || columnEndOverlaps(Other);
-    }
-  };
-
-private:
-  const MemoryBuffer &File;
-  const CoverageViewOptions &Options;
-  unsigned LineStart, LineCount;
-  SubViewKind Kind;
-  coverage::CounterMappingRegion ExpansionRegion;
-  std::vector<std::unique_ptr<SourceCoverageView>> Children;
-  std::vector<LineCoverageInfo> LineStats;
-  std::vector<HighlightRange> HighlightRanges;
-  std::vector<RegionMarker> Markers;
-  StringRef FunctionName;
-
-  /// \brief Create the line coverage information using the coverage data.
-  void createLineCoverageInfo(SourceCoverageDataManager &Data);
-
-  /// \brief Create the line highlighting ranges using the coverage data.
-  void createHighlightRanges(SourceCoverageDataManager &Data);
-
-  /// \brief Create the region markers using the coverage data.
-  void createRegionMarkers(SourceCoverageDataManager &Data);
-
-  /// \brief Sort children by the starting location.
-  void sortChildren();
-
-  /// \brief Return a highlight range for the expansion region of this view.
-  HighlightRange getExpansionHighlightRange() const;
-
-  /// \brief Render a source line with highlighting.
-  void renderLine(raw_ostream &OS, StringRef Line,
-                  ArrayRef<HighlightRange> Ranges);
-
-  void renderOffset(raw_ostream &OS, unsigned I);
-
-  void renderViewDivider(unsigned Offset, unsigned Length, raw_ostream &OS);
-
-  /// \brief Render the line's execution count column.
-  void renderLineCoverageColumn(raw_ostream &OS, const LineCoverageInfo &Line);
-
-  /// \brief Render the line number column.
-  void renderLineNumberColumn(raw_ostream &OS, unsigned LineNo);
-
-  /// \brief Render all the region's execution counts on a line.
-  void renderRegionMarkers(raw_ostream &OS, ArrayRef<RegionMarker> Regions);
-
-  static const unsigned LineCoverageColumnWidth = 7;
-  static const unsigned LineNumberColumnWidth = 5;
-
-public:
-  SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options)
-      : File(File), Options(Options), LineStart(1), Kind(View),
-        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0) {
-    LineCount = File.getBuffer().count('\n') + 1;
+  ExpansionView(const CounterMappingRegion &Region,
+                std::unique_ptr<SourceCoverageView> View)
+      : Region(Region), View(std::move(View)) {}
+  ExpansionView(ExpansionView &&RHS)
+      : Region(std::move(RHS.Region)), View(std::move(RHS.View)) {}
+  ExpansionView &operator=(ExpansionView &&RHS) {
+    Region = std::move(RHS.Region);
+    View = std::move(RHS.View);
+    return *this;
   }
 
-  SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options, unsigned LineStart,
-                     unsigned LineEnd)
-      : File(File), Options(Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(View),
-        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0) {}
+  unsigned getLine() const { return Region.LineStart; }
+  unsigned getStartCol() const { return Region.ColumnStart; }
+  unsigned getEndCol() const { return Region.ColumnEnd; }
 
-  SourceCoverageView(SourceCoverageView &Parent, unsigned LineStart,
-                     unsigned LineEnd, StringRef FunctionName)
-      : File(Parent.File), Options(Parent.Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(InstantiationView),
-        ExpansionRegion(coverage::Counter(), 0, LineEnd, 0, LineEnd, 0),
-        FunctionName(FunctionName) {}
+  friend bool operator<(const ExpansionView &LHS, const ExpansionView &RHS) {
+    return LHS.Region.startLoc() < RHS.Region.startLoc();
+  }
+};
 
-  SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options, unsigned LineStart,
-                     unsigned LineEnd,
-                     const coverage::CounterMappingRegion &ExpansionRegion)
-      : File(File), Options(Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(ExpansionView),
-        ExpansionRegion(ExpansionRegion) {}
+/// \brief A view that represents a function instantiation.
+struct InstantiationView {
+  StringRef FunctionName;
+  unsigned Line;
+  std::unique_ptr<SourceCoverageView> View;
+
+  InstantiationView(StringRef FunctionName, unsigned Line,
+                    std::unique_ptr<SourceCoverageView> View)
+      : FunctionName(FunctionName), Line(Line), View(std::move(View)) {}
+
+  friend bool operator<(const InstantiationView &LHS,
+                        const InstantiationView &RHS) {
+    return LHS.Line < RHS.Line;
+  }
+};
+
+/// \brief A file manager that handles format-aware file creation.
+class CoveragePrinter {
+public:
+  struct StreamDestructor {
+    void operator()(raw_ostream *OS) const;
+  };
+
+  using OwnedStream = std::unique_ptr<raw_ostream, StreamDestructor>;
+
+protected:
+  const CoverageViewOptions &Opts;
+
+  CoveragePrinter(const CoverageViewOptions &Opts) : Opts(Opts) {}
+
+  /// \brief Return `OutputDir/ToplevelDir/Path.Extension`. If \p InToplevel is
+  /// false, skip the ToplevelDir component. If \p Relative is false, skip the
+  /// OutputDir component.
+  std::string getOutputPath(StringRef Path, StringRef Extension,
+                            bool InToplevel, bool Relative = true) const;
+
+  /// \brief If directory output is enabled, create a file in that directory
+  /// at the path given by getOutputPath(). Otherwise, return stdout.
+  Expected<OwnedStream> createOutputStream(StringRef Path, StringRef Extension,
+                                           bool InToplevel) const;
+
+  /// \brief Return the sub-directory name for file coverage reports.
+  static StringRef getCoverageDir() { return "coverage"; }
+
+public:
+  static std::unique_ptr<CoveragePrinter>
+  create(const CoverageViewOptions &Opts);
+
+  virtual ~CoveragePrinter() {}
+
+  /// @name File Creation Interface
+  /// @{
+
+  /// \brief Create a file to print a coverage view into.
+  virtual Expected<OwnedStream> createViewFile(StringRef Path,
+                                               bool InToplevel) = 0;
+
+  /// \brief Close a file which has been used to print a coverage view.
+  virtual void closeViewFile(OwnedStream OS) = 0;
+
+  /// \brief Create an index which lists reports for the given source files.
+  virtual Error createIndexFile(ArrayRef<std::string> SourceFiles,
+                                const CoverageMapping &Coverage,
+                                const CoverageFiltersMatchAll &Filters) = 0;
+
+  /// @}
+};
+
+/// \brief A code coverage view of a source file or function.
+///
+/// A source coverage view and its nested sub-views form a file-oriented
+/// representation of code coverage data. This view can be printed out by a
+/// renderer which implements the Rendering Interface.
+class SourceCoverageView {
+  /// A function or file name.
+  StringRef SourceName;
+
+  /// A memory buffer backing the source on display.
+  const MemoryBuffer &File;
+
+  /// Various options to guide the coverage renderer.
+  const CoverageViewOptions &Options;
+
+  /// Complete coverage information about the source on display.
+  CoverageData CoverageInfo;
+
+  /// A container for all expansions (e.g macros) in the source on display.
+  std::vector<ExpansionView> ExpansionSubViews;
+
+  /// A container for all instantiations (e.g template functions) in the source
+  /// on display.
+  std::vector<InstantiationView> InstantiationSubViews;
+
+  /// Get the first uncovered line number for the source file.
+  unsigned getFirstUncoveredLineNo();
+
+protected:
+  struct LineRef {
+    StringRef Line;
+    int64_t LineNo;
+
+    LineRef(StringRef Line, int64_t LineNo) : Line(Line), LineNo(LineNo) {}
+  };
+
+  using CoverageSegmentArray = ArrayRef<const CoverageSegment *>;
+
+  /// @name Rendering Interface
+  /// @{
+
+  /// \brief Render a header for the view.
+  virtual void renderViewHeader(raw_ostream &OS) = 0;
+
+  /// \brief Render a footer for the view.
+  virtual void renderViewFooter(raw_ostream &OS) = 0;
+
+  /// \brief Render the source name for the view.
+  virtual void renderSourceName(raw_ostream &OS, bool WholeFile) = 0;
+
+  /// \brief Render the line prefix at the given \p ViewDepth.
+  virtual void renderLinePrefix(raw_ostream &OS, unsigned ViewDepth) = 0;
+
+  /// \brief Render the line suffix at the given \p ViewDepth.
+  virtual void renderLineSuffix(raw_ostream &OS, unsigned ViewDepth) = 0;
+
+  /// \brief Render a view divider at the given \p ViewDepth.
+  virtual void renderViewDivider(raw_ostream &OS, unsigned ViewDepth) = 0;
+
+  /// \brief Render a source line with highlighting.
+  virtual void renderLine(raw_ostream &OS, LineRef L,
+                          const LineCoverageStats &LCS, unsigned ExpansionCol,
+                          unsigned ViewDepth) = 0;
+
+  /// \brief Render the line's execution count column.
+  virtual void renderLineCoverageColumn(raw_ostream &OS,
+                                        const LineCoverageStats &Line) = 0;
+
+  /// \brief Render the line number column.
+  virtual void renderLineNumberColumn(raw_ostream &OS, unsigned LineNo) = 0;
+
+  /// \brief Render all the region's execution counts on a line.
+  virtual void renderRegionMarkers(raw_ostream &OS,
+                                   const LineCoverageStats &Line,
+                                   unsigned ViewDepth) = 0;
+
+  /// \brief Render the site of an expansion.
+  virtual void renderExpansionSite(raw_ostream &OS, LineRef L,
+                                   const LineCoverageStats &LCS,
+                                   unsigned ExpansionCol,
+                                   unsigned ViewDepth) = 0;
+
+  /// \brief Render an expansion view and any nested views.
+  virtual void renderExpansionView(raw_ostream &OS, ExpansionView &ESV,
+                                   unsigned ViewDepth) = 0;
+
+  /// \brief Render an instantiation view and any nested views.
+  virtual void renderInstantiationView(raw_ostream &OS, InstantiationView &ISV,
+                                       unsigned ViewDepth) = 0;
+
+  /// \brief Render \p Title, a project title if one is available, and the
+  /// created time.
+  virtual void renderTitle(raw_ostream &OS, StringRef CellText) = 0;
+
+  /// \brief Render the table header for a given source file.
+  virtual void renderTableHeader(raw_ostream &OS, unsigned FirstUncoveredLineNo,
+                                 unsigned IndentLevel) = 0;
+
+  /// @}
+
+  /// \brief Format a count using engineering notation with 3 significant
+  /// digits.
+  static std::string formatCount(uint64_t N);
+
+  /// \brief Check if region marker output is expected for a line.
+  bool shouldRenderRegionMarkers(const LineCoverageStats &LCS) const;
+
+  /// \brief Check if there are any sub-views attached to this view.
+  bool hasSubViews() const;
+
+  SourceCoverageView(StringRef SourceName, const MemoryBuffer &File,
+                     const CoverageViewOptions &Options,
+                     CoverageData &&CoverageInfo)
+      : SourceName(SourceName), File(File), Options(Options),
+        CoverageInfo(std::move(CoverageInfo)) {}
+
+public:
+  static std::unique_ptr<SourceCoverageView>
+  create(StringRef SourceName, const MemoryBuffer &File,
+         const CoverageViewOptions &Options, CoverageData &&CoverageInfo);
+
+  virtual ~SourceCoverageView() {}
+
+  /// \brief Return the source name formatted for the host OS.
+  std::string getSourceName() const;
 
   const CoverageViewOptions &getOptions() const { return Options; }
 
-  bool isExpansionSubView() const { return Kind == ExpansionView; }
+  /// \brief Add an expansion subview to this view.
+  void addExpansion(const CounterMappingRegion &Region,
+                    std::unique_ptr<SourceCoverageView> View);
 
-  bool isInstantiationSubView() const { return Kind == InstantiationView; }
+  /// \brief Add a function instantiation subview to this view.
+  void addInstantiation(StringRef FunctionName, unsigned Line,
+                        std::unique_ptr<SourceCoverageView> View);
 
-  /// \brief Return the line number after which the subview expansion is shown.
-  unsigned getSubViewsExpansionLine() const {
-    return ExpansionRegion.LineStart;
-  }
-
-  void addChild(std::unique_ptr<SourceCoverageView> View) {
-    Children.push_back(std::move(View));
-  }
-
-  /// \brief Print the code coverage information for a specific
-  /// portion of a source file to the output stream.
-  void render(raw_ostream &OS, unsigned Offset = 0);
-
-  /// \brief Load the coverage information required for rendering
-  /// from the mapping regions in the data manager.
-  void load(SourceCoverageDataManager &Data);
+  /// \brief Print the code coverage information for a specific portion of a
+  /// source file to the output stream.
+  void print(raw_ostream &OS, bool WholeFile, bool ShowSourceName,
+             bool ShowTitle, unsigned ViewDepth = 0);
 };
 
 } // namespace llvm

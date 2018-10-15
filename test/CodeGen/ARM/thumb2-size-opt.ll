@@ -46,3 +46,68 @@ entry:
   %eor = xor i32 %a, %b
   ret i32 %eor
 }
+
+define i32 @lsl-imm(i32 %a) nounwind readnone {
+; CHECK-LABEL: "lsl-imm":
+; CHECK: lsl.w r{{[0-9]+}}, r{{[0-9]+}}, #13 @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsls r{{[0-7]}}, r{{[0-7]}}, #13  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shl = shl i32 %a, 13
+  ret i32 %shl
+}
+
+define i32 @lsl-reg(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: "lsl-reg":
+; CHECK: lsl.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsls r{{[0-7]}}, r{{[0-7]}}  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shl = shl i32 %a, %b
+  ret i32 %shl
+}
+
+define i32 @lsr-imm(i32 %a) nounwind readnone {
+; CHECK-LABEL: "lsr-imm":
+; CHECK: lsr.w r{{[0-9]+}}, r{{[0-9]+}}, #13 @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsrs r{{[0-7]}}, r{{[0-7]}}, #13  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shr = lshr i32 %a, 13
+  ret i32 %shr
+}
+
+define i32 @lsr-reg(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: "lsr-reg":
+; CHECK: lsr.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsrs r{{[0-7]}}, r{{[0-7]}}  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shr = lshr i32 %a, %b
+  ret i32 %shr
+}
+
+define i32 @bundled_instruction(i32* %addr, i32** %addr2, i1 %tst) minsize {
+; CHECK-LABEL: bundled_instruction:
+; CHECK: iteee	ne
+; CHECK: ldmeq	r0!, {{{r[0-9]+}}}
+  br i1 %tst, label %true, label %false
+
+true:
+  ret i32 0
+
+false:
+  %res = load i32, i32* %addr, align 4
+  %next = getelementptr i32, i32* %addr, i32 1
+  store i32* %next, i32** %addr2
+  ret i32 %res
+}
+
+; ldm instructions fault on misaligned accesses so we mustn't convert
+; this post-indexed ldr into one.
+define i32* @misaligned_post(i32* %src, i32* %dest) minsize {
+; CHECK-LABEL: misaligned_post:
+; CHECK: ldr [[VAL:.*]], [r0], #4
+; CHECK: str [[VAL]], [r1]
+
+  %val = load i32, i32* %src, align 1
+  store i32 %val, i32* %dest
+  %next = getelementptr i32, i32* %src, i32 1
+  ret i32* %next
+}
