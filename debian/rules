@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 export DH_VERBOSE = 1
 
+MAKEFILE = $(firstword $(MAKEFILE_LIST))
+DEBIAN_DIR = $(dir $(MAKEFILE))
+
 DEB_HOST_ARCH_BITS := $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
 ifeq ($(DEB_HOST_ARCH_BITS), 32)
@@ -8,13 +11,17 @@ ifeq ($(DEB_HOST_ARCH_BITS), 32)
 endif
 
 override_dh_auto_configure:
-	$(LINUX32) ./configure --prefix=/usr/lib/mono/llvm --enable-targets=host --enable-optimized
+	mkdir -p buildybuild
+	cd buildybuild && $(LINUX32) cmake -DLLVM_TARGETS_TO_BUILD="Native" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=/usr/lib/mono/llvm/ ..
 
 override_dh_auto_clean:
 	true
 
 override_dh_auto_test:
 	true
+
+override_dh_auto_install:
+	cd buildybuild && cmake -DCMAKE_INSTALL_PREFIX=$(DEBIAN_DIR)/tmp/lib/mono/llvm/ -P cmake_install.cmake
 
 override_dh_install:
 	dh_install
