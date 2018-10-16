@@ -2,7 +2,7 @@ Source: mono-llvm
 Section: devel
 Priority: optional
 Maintainer: Jo Shields <joshield@microsoft.com>
-Build-Depends: debhelper (>= 7.0.50~), autotools-dev, python, cmake (>= 3.4.3~)
+Build-Depends: debhelper (>= 7.0.50~), autotools-dev, python, cmake (>= 3.4.3~) | cmake3 (>= 3.4.3~)
 Standards-Version: 3.9.8
 Homepage: http://www.mono-project.com/docs/advanced/mono-llvm/
 Vcs-Git: git://github.com/mono/linux-packaging-mono-llvm.git
