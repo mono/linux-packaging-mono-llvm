@@ -3,6 +3,7 @@ export DH_VERBOSE = 1
 
 MAKEFILE = $(firstword $(MAKEFILE_LIST))
 DEBIAN_DIR = $(dir $(MAKEFILE))
+DEBIAN_DIR_ABS = $(shell realpath $(DEBIAN_DIR))
 
 DEB_HOST_ARCH_BITS := $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
@@ -25,7 +26,7 @@ override_dh_auto_test:
 	true
 
 override_dh_auto_install:
-	cd buildybuild && cmake -DCMAKE_INSTALL_PREFIX=$(DEBIAN_DIR)/tmp/usr/lib/mono/llvm/ -P cmake_install.cmake
+	cd buildybuild && cmake -DCMAKE_INSTALL_PREFIX=$(DEBIAN_DIR_ABS)/tmp/usr/lib/mono/llvm/ -P cmake_install.cmake
 
 override_dh_install:
 	dh_install
