@@ -1,3 +1,9 @@
+mono-llvm (6.0+mono20180728010642-0xamarin5) preview; urgency=medium
+
+  * Packaging bugfix:
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Tue, 16 Oct 2018 15:53:32 +0000
+
 mono-llvm (6.0+mono20180728010642-0xamarin4) preview; urgency=medium
 
   [ Xamarin Public Jenkins (auto-signing) ]
