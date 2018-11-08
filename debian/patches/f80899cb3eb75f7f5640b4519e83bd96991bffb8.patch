@@ -59,13 +59,13 @@ Fixes https://github.com/mono/mono/issues/11095
  lib/Target/ARM/ARMISelLowering.cpp | 11 +++++++----
  2 files changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/lib/Target/ARM/ARMCallingConv.td b/lib/Target/ARM/ARMCallingConv.td
-index 956696c7d02..0380983ef54 100644
---- a/lib/Target/ARM/ARMCallingConv.td
-+++ b/lib/Target/ARM/ARMCallingConv.td
-@@ -261,3 +261,11 @@ def CSR_GenericInt : CalleeSavedRegs<(add LR, (sequence "R%u", 12, 0))>;
- def CSR_FIQ : CalleeSavedRegs<(add LR, R11, (sequence "R%u", 7, 0))>;
- 
+Index: xamarin-pkg-mono-llvm/lib/Target/ARM/ARMCallingConv.td
+===================================================================
+--- xamarin-pkg-mono-llvm.orig/lib/Target/ARM/ARMCallingConv.td
++++ xamarin-pkg-mono-llvm/lib/Target/ARM/ARMCallingConv.td
+@@ -334,3 +334,11 @@ def CC_ARM_Mono_AAPCS : CallingConv<[
+   CCDelegateTo<CC_ARM_AAPCS>
+ ]>;
  
 +def CC_ARM_Mono_AAPCS_VFP : CallingConv<[
 +  // Mono marks the parameter it wants to pass in this non-abi register with
@@ -75,11 +75,11 @@ index 956696c7d02..0380983ef54 100644
 +  CCDelegateTo<CC_ARM_AAPCS_VFP>
 +]>;
 +
-diff --git a/lib/Target/ARM/ARMISelLowering.cpp b/lib/Target/ARM/ARMISelLowering.cpp
-index 637107c021f..e3df48343f7 100644
---- a/lib/Target/ARM/ARMISelLowering.cpp
-+++ b/lib/Target/ARM/ARMISelLowering.cpp
-@@ -1322,10 +1322,13 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
+Index: xamarin-pkg-mono-llvm/lib/Target/ARM/ARMISelLowering.cpp
+===================================================================
+--- xamarin-pkg-mono-llvm.orig/lib/Target/ARM/ARMISelLowering.cpp
++++ xamarin-pkg-mono-llvm/lib/Target/ARM/ARMISelLowering.cpp
+@@ -1623,10 +1623,13 @@ CCAssignFn *ARMTargetLowering::CCAssignF
      if (Return) {
        return CCAssignFnForNode(CallingConv::C, true, isVarArg);
      } else {
