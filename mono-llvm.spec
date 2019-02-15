@@ -18,7 +18,11 @@ Name:           mono-llvm
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  cmake3
+%if 0%{?rhel} < 8
 BuildRequires:  python34
+%else
+BuildRequires:  python36
+%endif
 %if 0%{?rhel} < 7
 BuildRequires:  devtoolset-2-toolchain
 %endif
