@@ -35,6 +35,8 @@ Group:          Development/Tools/IDE
 Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
+%define debug_package %{nil}
+
 %description
 Requires:       mono-llvm-tools = %{version}
 Requires:       mono-llvm-devel = %{version}
