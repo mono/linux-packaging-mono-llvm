@@ -32,6 +32,8 @@ Source:         %{name}-%{version}.tar.gz
 Patch0:		LLVM_NOEXCEPT.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
+%define debug_package %{nil}
+
 %description
 Requires:       mono-llvm-tools = %{version}
 Requires:       mono-llvm-devel = %{version}
