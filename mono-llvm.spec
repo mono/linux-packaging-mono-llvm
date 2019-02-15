@@ -12,7 +12,7 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-%_debugsource_template %{nil}
+
 
 Name:           mono-llvm
 BuildRequires:  autoconf
