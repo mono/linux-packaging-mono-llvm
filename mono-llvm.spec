@@ -19,9 +19,9 @@ BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  cmake3
 %if 0%{?rhel} < 8
-BuildRequires:  python34
+BuildRequires:  python
 %else
-BuildRequires:  python36
+BuildRequires:  python2
 %endif
 %if 0%{?rhel} < 7
 BuildRequires:  devtoolset-2-toolchain
@@ -69,7 +69,7 @@ This package contains development files for the IDE and plugins.
 %build
 %{?scl:scl enable %{scl} - << \EOF}
 which g++
-%configure --prefix=%{_prefix}/lib/mono/llvm/ --enable-targets=host --enable-optimized
+%configure --prefix=%{_prefix}/lib/mono/llvm/ --enable-targets=host --enable-optimized --with-python=/usr/bin/python2
 make
 %{?scl:EOF}
 
