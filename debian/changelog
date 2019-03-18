@@ -1,3 +1,9 @@
+mono-llvm (6.0+mono20181128173919-0xamarin2) preview; urgency=medium
+
+  * Packaging bugfix:
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Mon, 18 Mar 2019 19:04:43 +0000
+
 mono-llvm (6.0+mono20181128173919-0xamarin1) preview; urgency=medium
 
   * New release - mono-llvm-6.0+mono20181128173919.tar.gz
