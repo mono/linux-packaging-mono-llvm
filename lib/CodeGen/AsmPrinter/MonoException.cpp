@@ -254,6 +254,8 @@ MonoException::~MonoException()
 void
 MonoException::beginFunction(const MachineFunction *MF)
 {
+  if (DisableGNUEH && Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+    static_cast<ARMTargetStreamer*>(Asm->OutStreamer->getTargetStreamer())->emitFnStart();
   EHLabels.clear();
 }
 
@@ -414,6 +416,8 @@ MonoException::endFunction(const MachineFunction *MF)
   Frames.push_back(info);
   EHLabels.clear();
 
+  if (DisableGNUEH && Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+    static_cast<ARMTargetStreamer*>(Asm->OutStreamer->getTargetStreamer())->emitFnEnd();
 }
 
 /// EmitMonoLSDA - Mono's version of EmitExceptionTable
@@ -442,8 +446,6 @@ MonoException::EmitMonoLSDA(const EHInfo *info)
   std::sort(LandingPads.begin(), LandingPads.end(),
           [](const LandingPadInfo *L,
 			 const LandingPadInfo *R) { return L->TypeIds < R->TypeIds; });
-
-  assert(Asm->MAI->getExceptionHandlingType() == ExceptionHandling::DwarfCFI);
 
   // The type_info itself is emitted
   int TTypeEncoding = dwarf::DW_EH_PE_udata4;
