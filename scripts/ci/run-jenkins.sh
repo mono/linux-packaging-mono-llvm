@@ -3,7 +3,7 @@
 echo "ENVIRONMENT:"
 env
 
-llvm_base_CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64 -DLLVM_BUILD_TESTS=Off -DLLVM_INCLUDE_TESTS=Off -DLLVM_TOOLS_TO_BUILD=opt;llc;llvm-config;llvm-dis -G Ninja"
+llvm_base_CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64 -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=WebAssembly -DLLVM_BUILD_TESTS=Off -DLLVM_INCLUDE_TESTS=Off -DLLVM_TOOLS_TO_BUILD=opt;llc;llvm-config;llvm-dis -G Ninja"
 
 llvm64_CMAKE_FLAGS="$llvm_base_CMAKE_FLAGS"
 llvm32_CMAKE_FLAGS="$llvm_base_CMAKE_FLAGS -DLLVM_BUILD_32_BITS=On"
@@ -31,7 +31,7 @@ cp tmp-bin/* usr64/bin/
 
 rm -rf tmp-bin2
 mkdir tmp-bin2
-cp usr32/bin/llvm-config tmp-bin2
+cp usr32/bin/{llc,opt,llvm-dis,llvm-config} tmp-bin2
 rm usr32/bin/*
 cp tmp-bin2/* usr32/bin/
 # Don't need 32 bit binaries
