@@ -28,7 +28,7 @@ BuildRequires:  devtoolset-2-toolchain
 %endif
 Url:            http://www.mono-project.com/docs/advanced/mono-llvm/
 Version:	6.0+mono20190308102247b
-Release:	0.nightly.1
+Release:	0.nightly.2
 Summary:        LLVM fork for Mono
 License:        MIT and others
 Group:          Development/Tools/IDE
