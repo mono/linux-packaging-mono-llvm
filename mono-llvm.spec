@@ -65,7 +65,17 @@ Mono LLVM fork, tools needed for build time
 which g++
 mkdir buildybuild/
 cd buildybuild/
-cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DPYTHON_EXECUTABLE:FILEPATH="/usr/bin/python3" -DLLVM_ENABLE_ASSERTIONS="ON" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
+cmake3 \
+	-DLLVM_TARGETS_TO_BUILD="Native" \
+	-DLLVM_ENABLE_ASSERTIONS="OFF" \
+	-DCMAKE_BUILD_TYPE="Release" \
+	-DLLVM_BUILD_TESTS="OFF" \
+	-DLLVM_INCLUDE_TESTS="OFF" \
+	-DLLVM_BUILD_EXAMPLES="OFF" \
+	-DLLVM_INCLUDE_EXAMPLES="OFF" \
+	-DPYTHON_EXECUTABLE:FILEPATH="/usr/bin/python3" \
+	-DLLVM_TOOLS_TO_BUILD="opt;llc;llvm-config;llvm-dis" \
+	-DCMAKE_INSTALL_PREFIX=%{_prefix}/lib/mono/llvm/ ..
 make all
 %{?scl:EOF}
 
