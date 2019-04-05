@@ -66,7 +66,7 @@ which g++
 mkdir buildybuild/
 cd buildybuild/
 cmake3 \
-	-DLLVM_TARGETS_TO_BUILD="Native" \
+	-DLLVM_TARGETS_TO_BUILD="X86" \
 	-DLLVM_ENABLE_ASSERTIONS="OFF" \
 	-DCMAKE_BUILD_TYPE="Release" \
 	-DLLVM_BUILD_TESTS="OFF" \
