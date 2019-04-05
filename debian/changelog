@@ -1,3 +1,14 @@
+mono-llvm (6.0+mono20181128173919-0xamarin3) preview; urgency=medium
+
+  [ Xamarin Public Jenkins (auto-signing) ]
+  * Packaging bugfix:
+
+  [ Ubuntu ]
+  * [31ceee0] Use build arch detection, not Native [9c8d8fd] More
+    closely match in-tree cmake flags
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Fri, 05 Apr 2019 14:01:47 +0000
+
 mono-llvm (6.0+mono20181128173919-0xamarin2) preview; urgency=medium
 
   * Packaging bugfix:
