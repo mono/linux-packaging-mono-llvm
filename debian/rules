@@ -2,15 +2,37 @@
 export DH_VERBOSE = 1
 
 DEB_HOST_ARCH_BITS := $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 ifeq ($(DEB_HOST_ARCH_BITS), 32)
 	LINUX32 := linux32
 endif
 
+BUILDARCH := "Native"
+
+ifeq ($(DEB_HOST_ARCH), armel)
+        BUILDARCH = ARM
+endif
+ifeq ($(DEB_HOST_ARCH), armhf)
+        BUILDARCH = ARM
+endif
+ifeq ($(DEB_HOST_ARCH), arm64)
+        BUILDARCH = AArch64
+endif
+ifeq ($(DEB_HOST_ARCH), i386)
+        BUILDARCH = X86
+endif
+ifeq ($(DEB_HOST_ARCH), amd64)
+        BUILDARCH = X86
+endif
+ifeq ($(DEB_HOST_ARCH), ppc64el)
+        BUILDARCH = PowerPC
+endif
+
 override_dh_auto_configure:
 	mkdir -p buildybuild
 	cd buildybuild && $(LINUX32) cmake \
-		-DLLVM_TARGETS_TO_BUILD="Native" \
+		-DLLVM_TARGETS_TO_BUILD="$(BUILDARCH)" \
 		-DLLVM_ENABLE_ASSERTIONS="OFF" \
 		-DCMAKE_BUILD_TYPE="Release" \
 		-DLLVM_BUILD_TESTS="OFF" \
